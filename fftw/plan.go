@@ -4,6 +4,7 @@ package fftw
 import "C"
 
 import (
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -15,6 +16,7 @@ var createDestroyMu sync.Mutex
 
 type Plan struct {
 	fftwP C.fftw_plan
+	pin   runtime.Pinner
 }
 
 func (p *Plan) Execute() *Plan {
@@ -24,12 +26,23 @@ func (p *Plan) Execute() *Plan {
 
 func (p *Plan) Destroy() {
 	createDestroyMu.Lock()
-	C.fftw_destroy_plan(p.fftwP)
+	if p.fftwP != nil {
+		C.fftw_destroy_plan(p.fftwP)
+	}
+	p.fftwP = nil
 	createDestroyMu.Unlock()
+	p.pin.Unpin()
+}
+
+func planFinalizer(p *Plan) {
+	p.Destroy()
 }
 
 func NewPlan(in, out *Array, dir Direction, flag Flag) *Plan {
 	// TODO: check that len(in) == len(out)
+	plan := &Plan{}
+	plan.pin.Pin(in.ptr())
+	plan.pin.Pin(out.ptr())
 	n := in.Len()
 	var (
 		n_    = C.int(n)
@@ -39,13 +52,17 @@ func NewPlan(in, out *Array, dir Direction, flag Flag) *Plan {
 		flag_ = C.uint(flag)
 	)
 	createDestroyMu.Lock()
-	p := C.fftw_plan_dft_1d(n_, in_, out_, dir_, flag_)
+	plan.fftwP = C.fftw_plan_dft_1d(n_, in_, out_, dir_, flag_)
 	createDestroyMu.Unlock()
-	return &Plan{p}
+	runtime.SetFinalizer(plan, planFinalizer)
+	return plan
 }
 
 func NewPlan2(in, out *Array2, dir Direction, flag Flag) *Plan {
 	// TODO: check that in and out have the same dimensions
+	plan := &Plan{}
+	plan.pin.Pin(in.ptr())
+	plan.pin.Pin(out.ptr())
 	n0, n1 := in.Dims()
 	var (
 		n0_   = C.int(n0)
@@ -56,13 +73,17 @@ func NewPlan2(in, out *Array2, dir Direction, flag Flag) *Plan {
 		flag_ = C.uint(flag)
 	)
 	createDestroyMu.Lock()
-	p := C.fftw_plan_dft_2d(n0_, n1_, in_, out_, dir_, flag_)
+	plan.fftwP = C.fftw_plan_dft_2d(n0_, n1_, in_, out_, dir_, flag_)
 	createDestroyMu.Unlock()
-	return &Plan{p}
+	runtime.SetFinalizer(plan, planFinalizer)
+	return plan
 }
 
 func NewPlan3(in, out *Array3, dir Direction, flag Flag) *Plan {
 	// TODO: check that in and out have the same dimensions
+	plan := &Plan{}
+	plan.pin.Pin(in.ptr())
+	plan.pin.Pin(out.ptr())
 	n0, n1, n2 := in.Dims()
 	var (
 		n0_   = C.int(n0)
@@ -74,13 +95,17 @@ func NewPlan3(in, out *Array3, dir Direction, flag Flag) *Plan {
 		flag_ = C.uint(flag)
 	)
 	createDestroyMu.Lock()
-	p := C.fftw_plan_dft_3d(n0_, n1_, n2_, in_, out_, dir_, flag_)
+	plan.fftwP = C.fftw_plan_dft_3d(n0_, n1_, n2_, in_, out_, dir_, flag_)
 	createDestroyMu.Unlock()
-	return &Plan{p}
+	runtime.SetFinalizer(plan, planFinalizer)
+	return plan
 }
 
 func NewPlanN(in, out *ArrayN, dir Direction, flag Flag) *Plan {
 	// TODO: check that in and out have the same dimensions
+	plan := &Plan{}
+	plan.pin.Pin(in.ptr())
+	plan.pin.Pin(out.ptr())
 	n := in.Dims()
 	n_ := make([]C.int, len(n))
 	for i := range n {
@@ -94,7 +119,8 @@ func NewPlanN(in, out *ArrayN, dir Direction, flag Flag) *Plan {
 		flag_ = C.uint(flag)
 	)
 	createDestroyMu.Lock()
-	p := C.fftw_plan_dft(rank_, &n_[0], in_, out_, dir_, flag_)
+	plan.fftwP = C.fftw_plan_dft(rank_, &n_[0], in_, out_, dir_, flag_)
 	createDestroyMu.Unlock()
-	return &Plan{p}
+	runtime.SetFinalizer(plan, planFinalizer)
+	return plan
 }
