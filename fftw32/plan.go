@@ -14,17 +14,17 @@ import (
 var createDestroyMu sync.Mutex
 
 type Plan struct {
-	fftw_p C.fftwf_plan
+	fftwP C.fftwf_plan
 }
 
 func (p *Plan) Execute() *Plan {
-	C.fftwf_execute(p.fftw_p)
+	C.fftwf_execute(p.fftwP)
 	return p
 }
 
 func (p *Plan) Destroy() {
 	createDestroyMu.Lock()
-	C.fftwf_destroy_plan(p.fftw_p)
+	C.fftwf_destroy_plan(p.fftwP)
 	createDestroyMu.Unlock()
 }
 

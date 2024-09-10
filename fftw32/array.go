@@ -36,7 +36,7 @@ type Array2 struct {
 	Elems []complex64
 }
 
-func (a *Array2) Dims() (n0, n1 int) {
+func (a *Array2) Dims() (int, int) {
 	return a.N[0], a.N[1]
 }
 
@@ -67,7 +67,7 @@ type Array3 struct {
 	Elems []complex64
 }
 
-func (a *Array3) Dims() (n0, n1, n2 int) {
+func (a *Array3) Dims() (int, int, int) {
 	return a.N[0], a.N[1], a.N[2]
 }
 

@@ -3,25 +3,23 @@ package fftw
 import (
 	"math"
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestNewArray(t *testing.T) {
-	d10 := NewArray(10)
-	d100 := NewArray(100)
-	d1000 := NewArray(1000)
-	Convey("Allocates the appropriate memory for 1D arrays.", t, func() {
-		So(len(d10.Elems), ShouldEqual, 10)
-		So(len(d100.Elems), ShouldEqual, 100)
-		So(len(d1000.Elems), ShouldEqual, 1000)
-	})
+	t.Parallel()
+	for _, n := range []int{10, 100, 1000} {
+		d := NewArray(n)
+		if len(d.Elems) != n {
+			t.Errorf("Expected %d elements got %d", n, len(d.Elems))
+		}
+	}
 }
 
 // Make sure that the memory allocated by fftw is getting properly GCed
 func TestGC(t *testing.T) {
-	var tot float64 = 0.0
-	for i := 0; i < 1000; i++ {
+	t.Parallel()
+	var tot float64
+	for i := range 1000 {
 		d := NewArray(1000000)                  // Allocate a bunch of memory
 		d.Elems[10000] = complex(float64(i), 0) // Do something stupid with it so
 		tot += real(d.Elems[10000])             // hopefully it doesn't get optimized out
@@ -29,94 +27,107 @@ func TestGC(t *testing.T) {
 }
 
 func TestNewArray2(t *testing.T) {
+	t.Parallel()
 	d100x50 := NewArray2(100, 50)
-	Convey("Allocates the appropriate memory for 2D arrays.", t, func() {
-		n0, n1 := d100x50.Dims()
-		So(n0, ShouldEqual, 100)
-		So(n1, ShouldEqual, 50)
-		var counter float64 = 0.0
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				d100x50.Set(i, j, complex(counter, 0))
-				counter += 1.0
-			}
+	n0, n1 := d100x50.Dims()
+	if n0 != 100 {
+		t.Fatalf("Expected dim[0] = 100, got %d", n0)
+	}
+	if n1 != 50 {
+		t.Fatalf("Expected dim[1] = 50, got %d", n1)
+	}
+	var counter float64
+	for i := range n0 {
+		for j := range n1 {
+			d100x50.Set(i, j, complex(counter, 0))
+			counter += 1.0
 		}
-		counter = 0.0
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				So(real(d100x50.At(i, j)), ShouldEqual, counter)
-				counter += 1.0
+	}
+	counter = 0.0
+	for i := range n0 {
+		for j := range n1 {
+			if v := real(d100x50.At(i, j)); v != counter {
+				t.Fatalf("Expected real(%d,%d) = %f, got %f", i, j, counter, v)
 			}
+			counter += 1.0
 		}
-	})
+	}
 }
 
 func TestNewArray3(t *testing.T) {
+	t.Parallel()
 	d100x20x10 := NewArray3(100, 20, 10)
-	Convey("Allocates the appropriate memory for 3D arrays.", t, func() {
-		n0, n1, n2 := d100x20x10.Dims()
-		So(n0, ShouldEqual, 100)
-		So(n1, ShouldEqual, 20)
-		So(n2, ShouldEqual, 10)
-		var counter float64 = 0.0
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				for k := 0; k < n2; k++ {
-					d100x20x10.Set(i, j, k, complex(counter, 0))
-					counter += 1.0
-				}
+	n0, n1, n2 := d100x20x10.Dims()
+	if n0 != 100 {
+		t.Fatalf("Expected dim[0] = 100, got %d", n0)
+	}
+	if n1 != 20 {
+		t.Fatalf("Expected dim[1] = 20, got %d", n1)
+	}
+	if n2 != 10 {
+		t.Fatalf("Expected dim[2] = 10, got %d", n1)
+	}
+	var counter float64 = 0.0
+	for i := range n0 {
+		for j := range n1 {
+			for k := range n2 {
+				d100x20x10.Set(i, j, k, complex(counter, 0))
+				counter += 1.0
 			}
 		}
-		counter = 0.0
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				for k := 0; k < n2; k++ {
-					So(real(d100x20x10.At(i, j, k)), ShouldEqual, counter)
-					counter += 1.0
+	}
+	counter = 0.0
+	for i := range n0 {
+		for j := range n1 {
+			for k := range n2 {
+				if v := real(d100x20x10.At(i, j, k)); v != counter {
+					t.Fatalf("Expected real(%d,%d,%d) = %f, got %f", i, j, k, counter, v)
 				}
+				counter += 1.0
 			}
 		}
-	})
+	}
 }
 
-func peakVerifier(s []complex128) {
-	So(real(s[0]), ShouldAlmostEqual, 0.0)
-	So(imag(s[0]), ShouldAlmostEqual, 0.0)
-	So(real(s[1]), ShouldAlmostEqual, float64(len(s))/2)
-	So(imag(s[1]), ShouldAlmostEqual, 0.0)
+func peakVerifier(t *testing.T, s []complex128) {
+	t.Helper()
+	testAlmostEqual(t, real(s[0]), 0.0)
+	testAlmostEqual(t, imag(s[0]), 0.0)
+	testAlmostEqual(t, real(s[1]), float64(len(s))/2)
+	testAlmostEqual(t, imag(s[1]), 0.0)
 	for i := 2; i < len(s)-1; i++ {
-		So(real(s[i]), ShouldAlmostEqual, 0.0)
-		So(imag(s[i]), ShouldAlmostEqual, 0.0)
+		testAlmostEqual(t, real(s[i]), 0.0)
+		testAlmostEqual(t, imag(s[i]), 0.0)
 	}
-	So(real(s[len(s)-1]), ShouldAlmostEqual, float64(len(s))/2)
-	So(imag(s[len(s)-1]), ShouldAlmostEqual, 0.0)
+	testAlmostEqual(t, real(s[len(s)-1]), float64(len(s))/2)
+	testAlmostEqual(t, imag(s[len(s)-1]), 0.0)
 }
 
 func TestFFT(t *testing.T) {
+	t.Parallel()
 	signal := NewArray(16)
-	new_in := NewArray(16)
+	newIn := NewArray(16)
 	for i := range signal.Elems {
 		signal.Elems[i] = complex(float64(i), float64(-i))
-		new_in.Elems[i] = signal.Elems[i]
+		newIn.Elems[i] = signal.Elems[i]
 	}
 
 	// A simple real cosine should result in transform with two spikes, one at S[1] and one at S[-1]
 	// The spikes should be real and have amplitude equal to len(S)/2 (because fftw doesn't normalize)
 	for i := range signal.Elems {
 		signal.Elems[i] = complex(float64(math.Cos(float64(i)/float64(len(signal.Elems))*math.Pi*2)), 0)
-		new_in.Elems[i] = signal.Elems[i]
+		newIn.Elems[i] = signal.Elems[i]
 	}
 	NewPlan(signal, signal, Forward, Estimate).Execute().Destroy()
-	Convey("Forward 1D FFT works properly.", t, func() {
-		peakVerifier(signal.Elems)
-	})
+	peakVerifier(t, signal.Elems)
 }
 
 func TestFFT2(t *testing.T) {
+	t.Parallel()
 	signal := NewArray2(64, 8)
 	n0, n1 := signal.Dims()
-	for i := 0; i < n0; i++ {
-		for j := 0; j < n1; j++ {
+	for i := range n0 {
+		for j := range n1 {
 			signal.Set(i, j, complex(float64(i+j), float64(-i-j)))
 		}
 	}
@@ -128,37 +139,36 @@ func TestFFT2(t *testing.T) {
 	fx := float64(dx) / 4
 	dy := n1
 	fy := float64(dy) / 4
-	for i := 0; i < n0; i++ {
-		for j := 0; j < n1; j++ {
+	for i := range n0 {
+		for j := range n1 {
 			cosx := math.Cos(float64(i) / float64(dx) * fx * math.Pi * 2)
 			cosy := math.Cos(float64(j) / float64(dy) * fy * math.Pi * 2)
 			signal.Set(i, j, complex(float64(cosx*cosy), 0))
 		}
 	}
 	NewPlan2(signal, signal, Forward, Estimate).Execute().Destroy()
-	Convey("Forward 2D FFT works properly.", t, func() {
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				if (i == int(fx) || i == dx-int(fx)) &&
-					(j == int(fy) || j == dy-int(fy)) {
-					So(real(signal.At(i, j)), ShouldAlmostEqual, float64(dx*dy/4))
-					So(imag(signal.At(i, j)), ShouldAlmostEqual, 0.0)
-				} else {
-					So(real(signal.At(i, j)), ShouldAlmostEqual, 0.0)
-					So(imag(signal.At(i, j)), ShouldAlmostEqual, 0.0)
-				}
+	for i := range n0 {
+		for j := range n1 {
+			if (i == int(fx) || i == dx-int(fx)) &&
+				(j == int(fy) || j == dy-int(fy)) {
+				testAlmostEqual(t, real(signal.At(i, j)), float64(dx*dy/4))
+				testAlmostEqual(t, imag(signal.At(i, j)), 0.0)
+			} else {
+				testAlmostEqual(t, real(signal.At(i, j)), 0.0)
+				testAlmostEqual(t, imag(signal.At(i, j)), 0.0)
 			}
 		}
-	})
+	}
 }
 
 func TestFFT3(t *testing.T) {
+	t.Parallel()
 	signal := NewArray3(32, 16, 8)
 
 	n0, n1, n2 := signal.Dims()
-	for i := 0; i < n0; i++ {
-		for j := 0; j < n1; j++ {
-			for k := 0; k < n2; k++ {
+	for i := range n0 {
+		for j := range n1 {
+			for k := range n2 {
 				signal.Set(i, j, k, complex(float64(i+j+k), float64(-i-j-k)))
 			}
 		}
@@ -173,9 +183,9 @@ func TestFFT3(t *testing.T) {
 	fy := float64(dy) / 4
 	dz := n2
 	fz := float64(dz) / 4
-	for i := 0; i < n0; i++ {
-		for j := 0; j < n1; j++ {
-			for k := 0; k < n2; k++ {
+	for i := range n0 {
+		for j := range n1 {
+			for k := range n2 {
 				cosx := math.Cos(float64(i) / float64(dx) * fx * math.Pi * 2)
 				cosy := math.Cos(float64(j) / float64(dy) * fy * math.Pi * 2)
 				cosz := math.Cos(float64(k) / float64(dz) * fz * math.Pi * 2)
@@ -184,21 +194,32 @@ func TestFFT3(t *testing.T) {
 		}
 	}
 	NewPlan3(signal, signal, Forward, Estimate).Execute().Destroy()
-	Convey("Forward 3D FFT works properly.", t, func() {
-		for i := 0; i < n0; i++ {
-			for j := 0; j < n1; j++ {
-				for k := 0; k < n2; k++ {
-					if (i == int(fx) || i == dx-int(fx)) &&
-						(j == int(fy) || j == dy-int(fy)) &&
-						(k == int(fz) || k == dz-int(fz)) {
-						So(real(signal.At(i, j, k)), ShouldAlmostEqual, float64(dx*dy*dz/8))
-						So(imag(signal.At(i, j, k)), ShouldAlmostEqual, 0.0)
-					} else {
-						So(real(signal.At(i, j, k)), ShouldAlmostEqual, 0.0)
-						So(imag(signal.At(i, j, k)), ShouldAlmostEqual, 0.0)
-					}
+	for i := range n0 {
+		for j := range n1 {
+			for k := range n2 {
+				if (i == int(fx) || i == dx-int(fx)) &&
+					(j == int(fy) || j == dy-int(fy)) &&
+					(k == int(fz) || k == dz-int(fz)) {
+					testAlmostEqual(t, real(signal.At(i, j, k)), float64(dx*dy*dz/8))
+					testAlmostEqual(t, imag(signal.At(i, j, k)), 0.0)
+				} else {
+					testAlmostEqual(t, real(signal.At(i, j, k)), 0.0)
+					testAlmostEqual(t, imag(signal.At(i, j, k)), 0.0)
 				}
 			}
 		}
-	})
+	}
+}
+
+const almostEqualEpsilon = 0.0000000001
+
+func almostEqual(v1, v2 float64) bool {
+	return math.Abs(v1-v2) < almostEqualEpsilon
+}
+
+func testAlmostEqual(t *testing.T, v1, v2 float64) {
+	t.Helper()
+	if !almostEqual(v1, v2) {
+		t.Fatalf("%f != %f (delta %f)", v1, v2, math.Abs(v1-v2))
+	}
 }
