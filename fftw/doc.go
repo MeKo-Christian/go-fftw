@@ -10,7 +10,8 @@ Provides simple functions to compute a transform without destroying existing dat
 	xhat := fftw.FFT(x)
 	x = fftw.IFFT(xhat)
 
-Beware that scaling is the same as in FFTW, so that computing forward and then inverse transforms scales the original input by the length of the sequence.
+Beware that scaling is the same as in FFTW, so that computing forward and then inverse
+transforms scales the original input by the length of the sequence.
 
 Use fftw.XxxTo() to do in-place operations
 
@@ -28,7 +29,8 @@ It is also possible to use fftw.Plan explicitly:
 	defer p.Destroy()
 	p.Execute()
 
-Beware that when using fftw.Measure instead of fftw.Estimate, the contents of the array may be overwritten by fftw.NewPlan().
+Beware that when using fftw.Measure instead of fftw.Estimate, the contents of the array
+may be overwritten by fftw.NewPlan().
 For this reason, all functions similar to fftw.FFT() and fftw.FFTTo() use fftw.Estimate.
 
 It's possible to use FFTW with memory not allocated by fftw.NewArrayX():

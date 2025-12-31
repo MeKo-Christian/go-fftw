@@ -4,6 +4,7 @@ import "testing"
 
 func TestCopySlice2(t *testing.T) {
 	t.Parallel()
+
 	cases := []struct {
 		M, N int
 		Lens []int
@@ -39,26 +40,38 @@ func TestCopySlice2(t *testing.T) {
 				x[i][j] = complex(float64((i+1)*j), 0)
 			}
 		}
+
 		arr := NewArray2(test.M, test.N)
+
 		err := CopySlice2(arr, x)
-		if test.Err && err != nil {
-			continue
-		}
 		if test.Err {
-			t.Errorf("expect error: %+v", test)
+			if err == nil {
+				t.Errorf("expect error: %+v", test)
+			}
+
 			continue
 		}
+
 		if err != nil {
 			t.Errorf("error: %v", err)
+
 			continue
 		}
-		for i := range test.M {
-			for j := range test.N {
-				want := complex(float64((i+1)*j), 0)
-				got := arr.At(i, j)
-				if got != want {
-					t.Errorf("at %d, %d: want %v, got %v", i, j, got, want)
-				}
+
+		verifyCopy2(t, arr, test.M, test.N)
+	}
+}
+
+func verifyCopy2(t *testing.T, arr *Array2, dim0, dim1 int) {
+	t.Helper()
+
+	for i := range dim0 {
+		for j := range dim1 {
+			want := complex(float64((i+1)*j), 0)
+			got := arr.At(i, j)
+
+			if got != want {
+				t.Errorf("at %d, %d: want %v, got %v", i, j, got, want)
 			}
 		}
 	}
@@ -66,6 +79,7 @@ func TestCopySlice2(t *testing.T) {
 
 func TestCopySlice3(t *testing.T) {
 	t.Parallel()
+
 	cases := []struct {
 		M, N, P int
 		Lens    [][]int
@@ -212,27 +226,39 @@ func TestCopySlice3(t *testing.T) {
 				}
 			}
 		}
+
 		arr := NewArray3(test.M, test.N, test.P)
+
 		err := CopySlice3(arr, x)
-		if test.Err && err != nil {
-			continue
-		}
 		if test.Err {
-			t.Errorf("expect error: %+v", test)
+			if err == nil {
+				t.Errorf("expect error: %+v", test)
+			}
+
 			continue
 		}
+
 		if err != nil {
 			t.Errorf("error: %v", err)
+
 			continue
 		}
-		for i := range test.M {
-			for j := range test.N {
-				for k := range test.P {
-					want := complex(float64(((i+1)*j+1)*k), 0)
-					got := arr.At(i, j, k)
-					if got != want {
-						t.Errorf("at %d, %d, %d: want %v, got %v", i, j, k, got, want)
-					}
+
+		verifyCopy3(t, arr, test.M, test.N, test.P)
+	}
+}
+
+func verifyCopy3(t *testing.T, arr *Array3, dim0, dim1, dim2 int) {
+	t.Helper()
+
+	for i := range dim0 {
+		for j := range dim1 {
+			for k := range dim2 {
+				want := complex(float64(((i+1)*j+1)*k), 0)
+				got := arr.At(i, j, k)
+
+				if got != want {
+					t.Errorf("at %d, %d, %d: want %v, got %v", i, j, k, got, want)
 				}
 			}
 		}

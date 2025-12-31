@@ -1,0 +1,79 @@
+package fftw
+
+import "testing"
+
+func expectPanic(t *testing.T, name string, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic: %s", name)
+		}
+	}()
+	f()
+}
+
+func TestNewPlanGuards(t *testing.T) {
+	t.Parallel()
+
+	var nilArray *Array
+	expectPanic(t, "nil input", func() {
+		NewPlan(nilArray, NewArray(1), Forward, Estimate)
+	})
+	expectPanic(t, "nil output", func() {
+		NewPlan(NewArray(1), nilArray, Forward, Estimate)
+	})
+	expectPanic(t, "empty input", func() {
+		NewPlan(NewArray(0), NewArray(0), Forward, Estimate)
+	})
+}
+
+func TestNewPlan2Guards(t *testing.T) {
+	t.Parallel()
+
+	var nilArray *Array2
+	expectPanic(t, "nil input", func() {
+		NewPlan2(nilArray, NewArray2(1, 1), Forward, Estimate)
+	})
+	expectPanic(t, "nil output", func() {
+		NewPlan2(NewArray2(1, 1), nilArray, Forward, Estimate)
+	})
+	expectPanic(t, "empty input", func() {
+		NewPlan2(NewArray2(0, 1), NewArray2(0, 1), Forward, Estimate)
+	})
+}
+
+func TestNewPlan3Guards(t *testing.T) {
+	t.Parallel()
+
+	var nilArray *Array3
+	expectPanic(t, "nil input", func() {
+		NewPlan3(nilArray, NewArray3(1, 1, 1), Forward, Estimate)
+	})
+	expectPanic(t, "nil output", func() {
+		NewPlan3(NewArray3(1, 1, 1), nilArray, Forward, Estimate)
+	})
+	expectPanic(t, "empty input", func() {
+		NewPlan3(NewArray3(1, 0, 1), NewArray3(1, 0, 1), Forward, Estimate)
+	})
+}
+
+func TestNewPlanNGuards(t *testing.T) {
+	t.Parallel()
+
+	var nilArray *ArrayN
+	expectPanic(t, "nil input", func() {
+		NewPlanN(nilArray, NewArrayN([]int{1}), Forward, Estimate)
+	})
+	expectPanic(t, "nil output", func() {
+		NewPlanN(NewArrayN([]int{1}), nilArray, Forward, Estimate)
+	})
+	expectPanic(t, "empty dims", func() {
+		NewPlanN(NewArrayN([]int{}), NewArrayN([]int{}), Forward, Estimate)
+	})
+	expectPanic(t, "zero dim", func() {
+		NewPlanN(NewArrayN([]int{2, 0}), NewArrayN([]int{2, 0}), Forward, Estimate)
+	})
+	expectPanic(t, "dim mismatch", func() {
+		NewPlanN(NewArrayN([]int{2, 2}), NewArrayN([]int{2, 3}), Forward, Estimate)
+	})
+}

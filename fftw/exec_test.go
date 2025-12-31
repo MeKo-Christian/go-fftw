@@ -6,6 +6,7 @@ import "testing"
 
 func TestFFT_exec(t *testing.T) {
 	t.Parallel()
+
 	n := 32
 	x := NewArray(n)
 	x = FFT(x)
@@ -14,6 +15,7 @@ func TestFFT_exec(t *testing.T) {
 
 func TestFFT2_exec(t *testing.T) {
 	t.Parallel()
+
 	n0, n1 := 32, 16
 	x := NewArray2(n0, n1)
 	x = FFT2(x)
@@ -22,6 +24,7 @@ func TestFFT2_exec(t *testing.T) {
 
 func TestFFT3_exec(t *testing.T) {
 	t.Parallel()
+
 	n0, n1, n2 := 32, 16, 8
 	x := NewArray3(n0, n1, n2)
 	x = FFT3(x)
@@ -30,6 +33,7 @@ func TestFFT3_exec(t *testing.T) {
 
 func TestFFTN_exec(t *testing.T) {
 	t.Parallel()
+
 	n := []int{32, 16, 8, 4}
 	x := NewArrayN(n)
 	x = FFTN(x)
