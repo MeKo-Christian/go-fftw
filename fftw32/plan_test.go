@@ -30,6 +30,33 @@ func TestNewPlanGuards(t *testing.T) {
 	expectPanic(t, "empty input", func() {
 		NewPlan(NewArray(0), NewArray(0), Forward, Estimate)
 	})
+
+	expectPanic(t, "size <= 0", func() {
+		NewPlanForSize(0, Forward, Estimate)
+	})
+}
+
+func TestNewPlanForSize(t *testing.T) {
+	t.Parallel()
+
+	p, in, out := NewPlanForSize(8, Forward, Estimate)
+	defer p.Destroy()
+
+	if got := p.String(); got == "" {
+		t.Fatalf("expected non-empty plan string")
+	}
+
+	in.Elems[0] = 1
+	for i := 1; i < len(in.Elems); i++ {
+		in.Elems[i] = 0
+	}
+
+	p.Execute()
+
+	for i := range out.Elems {
+		testAlmostEqual(t, real(out.Elems[i]), 1.0)
+		testAlmostEqual(t, imag(out.Elems[i]), 0.0)
+	}
 }
 
 func TestNewPlan2Guards(t *testing.T) {

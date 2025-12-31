@@ -21,6 +21,20 @@ type Plan struct {
 	pin   runtime.Pinner
 }
 
+// NewPlanForSize allocates input/output arrays of length n and returns a plan for them.
+//
+// This is a convenience helper for callers who want to create and reuse a plan based
+// solely on the transform size.
+func NewPlanForSize(n int, dir Direction, flag Flag) (p *Plan, in *Array, out *Array) {
+	if n <= 0 {
+		panic("fftw: n must be > 0")
+	}
+	in = NewArray(n)
+	out = NewArray(n)
+	p = NewPlan(in, out, dir, flag)
+	return p, in, out
+}
+
 func NewPlan(in, out *Array, dir Direction, flag Flag) *Plan {
 	if in == nil || out == nil {
 		panic("fftw: input and output must be non-nil")
@@ -158,6 +172,24 @@ func NewPlanN(in, out *ArrayN, dir Direction, flag Flag) *Plan {
 func (p *Plan) Execute() *Plan {
 	C.fftw_execute(p.fftwP)
 	return p
+}
+
+// String returns FFTW's textual description of the plan.
+//
+// This uses fftw_sprint_plan under the hood.
+func (p *Plan) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	if p.fftwP == nil {
+		return "<destroyed fftw plan>"
+	}
+	cstr := C.fftw_sprint_plan(p.fftwP)
+	if cstr == nil {
+		return ""
+	}
+	defer C.fftw_free(unsafe.Pointer(cstr))
+	return C.GoString(cstr)
 }
 
 func (p *Plan) Destroy() {
