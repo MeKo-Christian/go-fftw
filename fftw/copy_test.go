@@ -80,11 +80,50 @@ func verifyCopy2(t *testing.T, arr *Array2, dim0, dim1 int) {
 func TestCopySlice3(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		M, N, P int
-		Lens    [][]int
-		Err     bool
-	}{
+	for _, test := range getCopySlice3TestCases() {
+		x := make([][][]complex128, len(test.Lens))
+
+		for i := range test.Lens {
+			x[i] = make([][]complex128, len(test.Lens[i]))
+
+			for j := range x[i] {
+				x[i][j] = make([]complex128, test.Lens[i][j])
+
+				for k := range x[i][j] {
+					x[i][j][k] = complex(float64((((i+1)*j)+1)*k), 0)
+				}
+			}
+		}
+
+		arr := NewArray3(test.M, test.N, test.P)
+		err := CopySlice3(arr, x)
+
+		if test.Err {
+			if err == nil {
+				t.Errorf("expect error: %+v", test)
+			}
+
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("error: %v", err)
+
+			continue
+		}
+
+		verifyCopy3(t, arr, test.M, test.N, test.P)
+	}
+}
+
+type copySlice3TestCase struct {
+	M, N, P int
+	Lens    [][]int
+	Err     bool
+}
+
+func getCopySlice3TestCases() []copySlice3TestCase {
+	cases := []copySlice3TestCase{
 		// Test size mismatch.
 		{
 			4, 4, 4,
@@ -136,6 +175,15 @@ func TestCopySlice3(t *testing.T) {
 			},
 			true,
 		},
+	}
+
+	cases = append(cases, getCopySlice3MismatchTestCases()...)
+
+	return append(cases, getCopySlice3ExtraTestCases()...)
+}
+
+func getCopySlice3MismatchTestCases() []copySlice3TestCase {
+	return []copySlice3TestCase{
 		{
 			2, 3, 4,
 			[][]int{{4, 4, 4}, {4, 4, 4}},
@@ -166,6 +214,11 @@ func TestCopySlice3(t *testing.T) {
 			[][]int{{4, 4, 4}, {4, 4, 4}},
 			true,
 		},
+	}
+}
+
+func getCopySlice3ExtraTestCases() []copySlice3TestCase {
+	return []copySlice3TestCase{
 		// Singleton dimensions.
 		{
 			1, 3, 4,
@@ -213,38 +266,6 @@ func TestCopySlice3(t *testing.T) {
 			[][]int{{4, 4, 4}, {4, 4, 4, 4}},
 			true,
 		},
-	}
-
-	for _, test := range cases {
-		x := make([][][]complex128, len(test.Lens))
-		for i := range test.Lens {
-			x[i] = make([][]complex128, len(test.Lens[i]))
-			for j := range x[i] {
-				x[i][j] = make([]complex128, test.Lens[i][j])
-				for k := range x[i][j] {
-					x[i][j][k] = complex(float64((((i+1)*j)+1)*k), 0)
-				}
-			}
-		}
-
-		arr := NewArray3(test.M, test.N, test.P)
-
-		err := CopySlice3(arr, x)
-		if test.Err {
-			if err == nil {
-				t.Errorf("expect error: %+v", test)
-			}
-
-			continue
-		}
-
-		if err != nil {
-			t.Errorf("error: %v", err)
-
-			continue
-		}
-
-		verifyCopy3(t, arr, test.M, test.N, test.P)
 	}
 }
 

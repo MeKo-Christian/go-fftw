@@ -12,6 +12,7 @@ import (
 // According to fftw's doc on multithreading, creation and destruction of plans should be single-
 // threaded, so this will serve to synchronize that stuff, and hopefull multi-threaded is ok as long
 // as it's all synchronous.
+//
 //nolint:gochecknoglobals
 var createDestroyMu sync.Mutex
 
@@ -35,11 +36,11 @@ func NewPlan(in, out *Array, dir Direction, flag Flag) *Plan {
 	plan.pin.Pin(out.ptr())
 	n := in.Len()
 	var (
-		numElems    = C.int(n)
-		inPtr   = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
-		outPtr  = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
-		dir_  = C.int(dir)
-		flag_ = C.uint(flag)
+		numElems = C.int(n)
+		inPtr    = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
+		outPtr   = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
+		dir_     = C.int(dir)
+		flag_    = C.uint(flag)
 	)
 	createDestroyMu.Lock()
 	plan.fftwP = C.fftwf_plan_dft_1d(numElems, inPtr, outPtr, dir_, flag_)
@@ -66,10 +67,10 @@ func NewPlan2(in, out *Array2, dir Direction, flag Flag) *Plan {
 	var (
 		dim0   = C.int(in0)
 		dim1   = C.int(in1)
-		inPtr   = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
-		outPtr  = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
-		dir_  = C.int(dir)
-		flag_ = C.uint(flag)
+		inPtr  = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
+		outPtr = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
+		dir_   = C.int(dir)
+		flag_  = C.uint(flag)
 	)
 	createDestroyMu.Lock()
 	plan.fftwP = C.fftwf_plan_dft_2d(dim0, dim1, inPtr, outPtr, dir_, flag_)
@@ -97,10 +98,10 @@ func NewPlan3(in, out *Array3, dir Direction, flag Flag) *Plan {
 		dim0   = C.int(in0)
 		dim1   = C.int(in1)
 		dim2   = C.int(in2)
-		inPtr   = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
-		outPtr  = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
-		dir_  = C.int(dir)
-		flag_ = C.uint(flag)
+		inPtr  = (*C.fftwf_complex)(unsafe.Pointer(in.ptr()))
+		outPtr = (*C.fftwf_complex)(unsafe.Pointer(out.ptr()))
+		dir_   = C.int(dir)
+		flag_  = C.uint(flag)
 	)
 	createDestroyMu.Lock()
 	plan.fftwP = C.fftwf_plan_dft_3d(dim0, dim1, dim2, inPtr, outPtr, dir_, flag_)

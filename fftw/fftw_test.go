@@ -196,9 +196,11 @@ func testAlmostEqual(t *testing.T, v1, v2 float64) {
 
 func setArray2(a *Array2, dim0, dim1 int) {
 	counter := 0.0
+
 	for i := range dim0 {
 		for j := range dim1 {
 			a.Set(i, j, complex(counter, 0))
+
 			counter += 1.0
 		}
 	}
@@ -206,12 +208,15 @@ func setArray2(a *Array2, dim0, dim1 int) {
 
 func verifyArray2(t *testing.T, a *Array2, dim0, dim1 int) {
 	t.Helper()
+
 	counter := 0.0
+
 	for i := range dim0 {
 		for j := range dim1 {
 			if v := real(a.At(i, j)); v != counter {
 				t.Fatalf("Expected real(%d,%d) = %f, got %f", i, j, counter, v)
 			}
+
 			counter += 1.0
 		}
 	}
@@ -219,10 +224,12 @@ func verifyArray2(t *testing.T, a *Array2, dim0, dim1 int) {
 
 func setArray3(a *Array3, dim0, dim1, dim2 int) {
 	counter := 0.0
+
 	for i := range dim0 {
 		for j := range dim1 {
 			for k := range dim2 {
 				a.Set(i, j, k, complex(counter, 0))
+
 				counter += 1.0
 			}
 		}
@@ -231,13 +238,16 @@ func setArray3(a *Array3, dim0, dim1, dim2 int) {
 
 func verifyArray3(t *testing.T, a *Array3, dim0, dim1, dim2 int) {
 	t.Helper()
+
 	counter := 0.0
+
 	for i := range dim0 {
 		for j := range dim1 {
 			for k := range dim2 {
 				if v := real(a.At(i, j, k)); v != counter {
 					t.Fatalf("Expected real(%d,%d,%d) = %f, got %f", i, j, k, counter, v)
 				}
+
 				counter += 1.0
 			}
 		}
@@ -246,12 +256,15 @@ func verifyArray3(t *testing.T, a *Array3, dim0, dim1, dim2 int) {
 
 func verifyImpulse2(t *testing.T, a *Array2, dim0, dim1 int, wantVal float64, impulse bool) {
 	t.Helper()
+
 	for i := range dim0 {
 		for j := range dim1 {
 			want := wantVal
+
 			if impulse && (i != 0 || j != 0) {
 				want = 0.0
 			}
+
 			testAlmostEqual(t, real(a.At(i, j)), want)
 			testAlmostEqual(t, imag(a.At(i, j)), 0.0)
 		}
@@ -260,13 +273,16 @@ func verifyImpulse2(t *testing.T, a *Array2, dim0, dim1 int, wantVal float64, im
 
 func verifyImpulse3(t *testing.T, a *Array3, dim0, dim1, dim2 int, wantVal float64, impulse bool) {
 	t.Helper()
+
 	for i := range dim0 {
 		for j := range dim1 {
 			for k := range dim2 {
 				want := wantVal
+
 				if impulse && (i != 0 || j != 0 || k != 0) {
 					want = 0.0
 				}
+
 				testAlmostEqual(t, real(a.At(i, j, k)), want)
 				testAlmostEqual(t, imag(a.At(i, j, k)), 0.0)
 			}
@@ -276,6 +292,7 @@ func verifyImpulse3(t *testing.T, a *Array3, dim0, dim1, dim2 int, wantVal float
 
 func verifyFFT2(t *testing.T, a *Array2, dim0, dim1 int, freqX, freqY float64) {
 	t.Helper()
+
 	for i := range dim0 {
 		for j := range dim1 {
 			if (i == int(freqX) || i == dim0-int(freqX)) &&
@@ -292,6 +309,7 @@ func verifyFFT2(t *testing.T, a *Array2, dim0, dim1 int, freqX, freqY float64) {
 
 func verifyFFT3(t *testing.T, a *Array3, dim0, dim1, dim2 int, freqX, freqY, freqZ float64) {
 	t.Helper()
+
 	for i := range dim0 {
 		for j := range dim1 {
 			for k := range dim2 {
