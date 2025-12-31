@@ -23,7 +23,7 @@ On macOS (Homebrew), FFTW is typically installed under `/opt/homebrew`.
 ## Install
 
 ```bash
-go get github.com/samuel/go-fftw
+go get github.com/meko-christian/go-fftw
 ```
 
 ## Packages

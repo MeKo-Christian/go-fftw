@@ -1,3 +1,3 @@
-module github.com/samuel/go-fftw
+module github.com/meko-christian/go-fftw
 
-go 1.23.1
+go 1.24.11
